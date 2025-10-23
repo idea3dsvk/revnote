@@ -195,6 +195,16 @@ const App: React.FC = () => {
     }
   };
 
+  const handleRestoreAsset = (assetId: string) => {
+    setAssets(prevAssets =>
+      prevAssets.map(asset =>
+        asset.id === assetId
+          ? { ...asset, isExcluded: false }
+          : asset
+      )
+    );
+  };
+
   // Persist assets, operator and selected asset id whenever they change
   useEffect(() => {
     try {
@@ -289,6 +299,7 @@ const App: React.FC = () => {
                     onAddInspection={openAddInspectionModal}
                     operator={operator}
                     onExcludeAsset={handleExcludeAsset}
+                    onRestoreAsset={handleRestoreAsset}
                     canAddInspection={authService.canAddInspection()}
                     canExcludeAsset={authService.canExcludeAsset()}
                     canGeneratePDF={authService.canGeneratePDF()}
