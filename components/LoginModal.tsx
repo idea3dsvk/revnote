@@ -100,12 +100,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
             Prihlásiť sa
           </button>
         </form>
-        
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm font-semibold text-blue-900 mb-2">Predvolený administrátorský účet:</p>
-          <p className="text-sm text-blue-800">Meno: <code className="bg-blue-100 px-2 py-1 rounded">admin</code></p>
-          <p className="text-sm text-blue-800">Heslo: <code className="bg-blue-100 px-2 py-1 rounded">admin123</code></p>
-        </div>
       </div>
     </div>
   );
