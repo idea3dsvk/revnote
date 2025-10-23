@@ -14,8 +14,10 @@ interface AssetDetailProps {
   operator: Operator | null;
   onExcludeAsset: (assetId: string) => void;
   onRestoreAsset: (assetId: string) => void;
+  onDeleteAsset: (assetId: string) => void;
   canAddInspection?: boolean;
   canExcludeAsset?: boolean;
+  canDeleteAsset?: boolean;
   canGeneratePDF?: boolean;
 }
 
@@ -25,8 +27,10 @@ const AssetDetail: React.FC<AssetDetailProps> = ({
   operator, 
   onExcludeAsset,
   onRestoreAsset,
+  onDeleteAsset,
   canAddInspection = true,
   canExcludeAsset = true,
+  canDeleteAsset = false,
   canGeneratePDF = true
 }) => {
   const [expandedInspectionId, setExpandedInspectionId] = useState<string | null>(null);
@@ -64,6 +68,17 @@ const AssetDetail: React.FC<AssetDetailProps> = ({
   const handleRestore = () => {
     if (asset && window.confirm(`Naozaj chcete vrátiť zariadenie "${asset.name}" späť do evidencie?`)) {
       onRestoreAsset(asset.id);
+    }
+  };
+
+  const handleDelete = () => {
+    if (asset && window.confirm(`VAROVANIE: Naozaj chcete NATRVALO zmazať zariadenie "${asset.name}" z databázy?\n\nTáto akcia je NEVRATNÁ a vymaže celú históriu revízií!\n\nPre potvrdenie napíšte "ZMAZAŤ"`)) {
+      const confirmation = window.prompt('Pre potvrdenie napíšte "ZMAZAŤ":', '');
+      if (confirmation === 'ZMAZAŤ') {
+        onDeleteAsset(asset.id);
+      } else {
+        alert('Zmazanie bolo zrušené - nesprávne potvrdenie.');
+      }
     }
   };
 
@@ -108,6 +123,18 @@ const AssetDetail: React.FC<AssetDetailProps> = ({
                     >
                         <TrashIcon className="w-5 h-5 mr-2" />
                         Vylúčiť
+                    </button>
+                )}
+                {canDeleteAsset && (
+                    <button
+                        onClick={handleDelete}
+                        className="flex items-center bg-red-900 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-800 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-700 border-2 border-red-700"
+                        title="VAROVANIE: Trvalo zmaže zariadenie z databázy!"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        ZMAZAŤ NATRVALO
                     </button>
                 )}
                 {canGeneratePDF && asset.inspections.length > 0 && (

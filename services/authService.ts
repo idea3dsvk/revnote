@@ -124,6 +124,7 @@ export const hasPermission = (requiredRole: UserRole): boolean => {
 export const canAddAsset = (): boolean => hasPermission(UserRole.REVISOR);
 export const canAddInspection = (): boolean => hasPermission(UserRole.REVISOR);
 export const canExcludeAsset = (): boolean => hasPermission(UserRole.REVISOR);
+export const canDeleteAsset = (): boolean => getCurrentUser()?.role === UserRole.ADMINISTRATOR;
 export const canExportImport = (): boolean => getCurrentUser()?.role === UserRole.ADMINISTRATOR;
 export const canEditOperator = (): boolean => getCurrentUser()?.role === UserRole.ADMINISTRATOR;
 export const canManageUsers = (): boolean => getCurrentUser()?.role === UserRole.ADMINISTRATOR;
@@ -194,6 +195,7 @@ export default {
   canAddAsset,
   canAddInspection,
   canExcludeAsset,
+  canDeleteAsset,
   canExportImport,
   canEditOperator,
   canManageUsers,

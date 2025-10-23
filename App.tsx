@@ -205,6 +205,14 @@ const App: React.FC = () => {
     );
   };
 
+  const handleDeleteAsset = (assetId: string) => {
+    setAssets(prevAssets => prevAssets.filter(asset => asset.id !== assetId));
+    // If the deleted asset was selected, deselect it
+    if (selectedAssetId === assetId) {
+        setSelectedAssetId(null);
+    }
+  };
+
   // Persist assets, operator and selected asset id whenever they change
   useEffect(() => {
     try {
@@ -300,8 +308,10 @@ const App: React.FC = () => {
                     operator={operator}
                     onExcludeAsset={handleExcludeAsset}
                     onRestoreAsset={handleRestoreAsset}
+                    onDeleteAsset={handleDeleteAsset}
                     canAddInspection={authService.canAddInspection()}
                     canExcludeAsset={authService.canExcludeAsset()}
+                    canDeleteAsset={authService.canDeleteAsset()}
                     canGeneratePDF={authService.canGeneratePDF()}
                 />
             </div>
