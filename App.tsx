@@ -113,26 +113,40 @@ const App: React.FC = () => {
   }, []);
   
   useEffect(() => {
-    // Try to load persisted data first. Fallback to mock data if none saved.
-    const loadedAssets = persistence.loadAssets();
-    const loadedOperator = persistence.loadOperator();
-    const loadedSelectedId = persistence.loadSelectedAssetId();
+    // Load data from Firebase/localStorage
+    const loadData = async () => {
+      try {
+        const loadedAssets = await persistence.loadAssets();
+        const loadedOperator = await persistence.loadOperator();
+        const loadedSelectedId = persistence.loadSelectedAssetId();
 
-    if (loadedAssets && loadedAssets.length > 0) {
-      setAssets(loadedAssets);
-      setSelectedAssetId(loadedSelectedId ?? loadedAssets[0].id);
-    } else {
-      // Create a deep copy of mock data to prevent mutation of the original constant.
-      const initialAssets = JSON.parse(JSON.stringify(MOCK_ASSETS));
-      setAssets(initialAssets);
-      if (initialAssets.length > 0) {
-        setSelectedAssetId(initialAssets[0].id);
+        if (loadedAssets && loadedAssets.length > 0) {
+          setAssets(loadedAssets);
+          setSelectedAssetId(loadedSelectedId ?? loadedAssets[0].id);
+        } else {
+          // Create a deep copy of mock data to prevent mutation of the original constant.
+          const initialAssets = JSON.parse(JSON.stringify(MOCK_ASSETS));
+          setAssets(initialAssets);
+          if (initialAssets.length > 0) {
+            setSelectedAssetId(initialAssets[0].id);
+          }
+        }
+
+        if (loadedOperator) {
+          setOperator(loadedOperator);
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+        // Fallback to mock data on error
+        const initialAssets = JSON.parse(JSON.stringify(MOCK_ASSETS));
+        setAssets(initialAssets);
+        if (initialAssets.length > 0) {
+          setSelectedAssetId(initialAssets[0].id);
+        }
       }
-    }
+    };
 
-    if (loadedOperator) {
-      setOperator(loadedOperator);
-    }
+    loadData();
   }, []);
   
   const handleSaveOperator = (data: Operator) => {
