@@ -14,6 +14,7 @@ import ExportImport from './components/ExportImport';
 import LoginModal from './components/LoginModal';
 import UserPanel from './components/UserPanel';
 import UserManagement from './components/UserManagement';
+import Dashboard from './components/Dashboard';
 
 const MOCK_ASSETS: Asset[] = [
   {
@@ -92,6 +93,7 @@ const calculateNextInspectionDate = (baseDate: string, usageType: UsageType, usa
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isUserManagementOpen, setIsUserManagementOpen] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(true);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [isAddAssetModalOpen, setIsAddAssetModalOpen] = useState(false);
@@ -375,6 +377,16 @@ const App: React.FC = () => {
                 Evidencia revízií náradia a spotrebičov
             </h1>
             <div className="flex items-center gap-4">
+              <button
+                onClick={() => setShowDashboard(!showDashboard)}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${
+                  showDashboard 
+                    ? 'bg-primary-600 text-white hover:bg-primary-700' 
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                {showDashboard ? 'Skryť Dashboard' : 'Zobraziť Dashboard'}
+              </button>
               {authService.canExportImport() && (
                 <ExportImport 
                   assets={assets} 
@@ -390,7 +402,12 @@ const App: React.FC = () => {
             </div>
         </div>
       </header>
-      <main className="flex-grow p-4 md:p-6 lg:p-8">
+      <main className="flex-grow p-4 md:p-6 lg:p-8 overflow-y-auto">
+        {showDashboard && (
+          <div className="mb-6">
+            <Dashboard assets={assets} />
+          </div>
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-120px)]">
             <div className="lg:col-span-1 h-full">
                 <AssetList 
