@@ -75,10 +75,13 @@ Výstupné súbory budú v priečinku `dist/`.
 
 ### Prihlásenie
 
-Aplikácia vyžaduje prihlásenie. Predvolené účty:
-- **Administrator**: `admin` / `admin123` (úplné oprávnenia)
-- **Revítor**: `revisor` / `revisor123` (prístup k revíziám, nemôže editovať prevádzkovateľa)
-- **Používateľ**: `user` / `user123` (len prezeranie a tlač PDF)
+Aplikácia vyžaduje prihlásenie pomocou používateľského mena a hesla. Systém podporuje tri úrovne oprávnení:
+
+- **Administrator** - úplné oprávnenia (správa používateľov, export/import, editácia všetkých dát)
+- **Revítor** - prístup k revíziám a zariadeniam (nemôže editovať prevádzkovateľa ani spravovať používateľov)
+- **Používateľ** - len prezeranie evidencie a tlač PDF správ
+
+Pri prvom spustení si vytvorte vlastný účet alebo použite predvolené testovacie účty (odporúčame zmeniť heslá po prvom prihlásení).
 
 ### Pridanie zariadenia
 
