@@ -151,31 +151,33 @@ const App: React.FC = () => {
 
   // Real-time synchronization with Firebase
   useEffect(() => {
-    const firebaseService = require('./services/firebaseService').default;
-    
-    // Subscribe to assets changes
-    const unsubscribeAssets = firebaseService.subscribeToAssets((updatedAssets: Asset[]) => {
-      if (updatedAssets.length > 0) {
-        setAssets(updatedAssets);
-        localStorage.setItem('evr_assets_v1', JSON.stringify(updatedAssets));
-        console.log('Assets updated from Firebase (real-time):', updatedAssets.length);
-      }
-    });
+    import('./services/firebaseService').then(({ default: firebaseService }) => {
+      // Subscribe to assets changes
+      const unsubscribeAssets = firebaseService.subscribeToAssets((updatedAssets: Asset[]) => {
+        if (updatedAssets.length > 0) {
+          setAssets(updatedAssets);
+          localStorage.setItem('evr_assets_v1', JSON.stringify(updatedAssets));
+          console.log('Assets updated from Firebase (real-time):', updatedAssets.length);
+        }
+      });
 
-    // Subscribe to operator changes
-    const unsubscribeOperator = firebaseService.subscribeToOperator((updatedOperator: Operator | null) => {
-      if (updatedOperator) {
-        setOperator(updatedOperator);
-        localStorage.setItem('evr_operator_v1', JSON.stringify(updatedOperator));
-        console.log('Operator updated from Firebase (real-time)');
-      }
-    });
+      // Subscribe to operator changes
+      const unsubscribeOperator = firebaseService.subscribeToOperator((updatedOperator: Operator | null) => {
+        if (updatedOperator) {
+          setOperator(updatedOperator);
+          localStorage.setItem('evr_operator_v1', JSON.stringify(updatedOperator));
+          console.log('Operator updated from Firebase (real-time)');
+        }
+      });
 
-    // Cleanup subscriptions on unmount
-    return () => {
-      unsubscribeAssets();
-      unsubscribeOperator();
-    };
+      // Cleanup subscriptions on unmount
+      return () => {
+        unsubscribeAssets();
+        unsubscribeOperator();
+      };
+    }).catch(error => {
+      console.error('Error loading Firebase service:', error);
+    });
   }, []);
   
   const handleSaveOperator = (data: Operator) => {
