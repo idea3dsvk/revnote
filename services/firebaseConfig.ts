@@ -1,6 +1,7 @@
 import { initializeApp, FirebaseApp } from 'firebase/app';
 import { getFirestore, Firestore } from 'firebase/firestore';
 import { getAuth, Auth } from 'firebase/auth';
+import { initializeAppCheck, ReCaptchaV3Provider } from '@firebase/app-check';
 
 // Firebase konfigurácia - tieto hodnoty získate z Firebase Console
 const firebaseConfig = {
@@ -25,6 +26,19 @@ if (isFirebaseConfigured) {
     app = initializeApp(firebaseConfig);
     db = getFirestore(app);
     auth = getAuth(app);
+    
+    // Initialize App Check s reCAPTCHA v3
+    const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+    if (recaptchaSiteKey) {
+      initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider(recaptchaSiteKey),
+        isTokenAutoRefreshEnabled: true
+      });
+      console.log('Firebase App Check initialized successfully');
+    } else {
+      console.warn('reCAPTCHA Site Key not configured. App Check disabled.');
+    }
+    
     console.log('Firebase initialized successfully');
   } catch (error) {
     console.error('Error initializing Firebase:', error);
