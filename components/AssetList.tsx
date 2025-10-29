@@ -125,7 +125,8 @@ const AssetList: React.FC<AssetListProps> = ({
         })
         .filter(asset =>
             asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            asset.revisionNumber.toLowerCase().includes(searchTerm.toLowerCase())
+            asset.revisionNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            asset.serialNumber.toLowerCase().includes(searchTerm.toLowerCase())
         );
 
     // Reset to first page when filters change
@@ -198,7 +199,7 @@ const AssetList: React.FC<AssetListProps> = ({
                 <div className="mt-4 relative">
                     <input
                         type="text"
-                        placeholder="Hľadať podľa názvu alebo rev. č...."
+                        placeholder="Hľadať podľa názvu, rev. č. alebo sér. č...."
                         className="w-full pl-8 pr-4 py-2 border rounded-lg focus:ring-primary-500 focus:border-primary-500"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
