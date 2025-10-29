@@ -15,6 +15,7 @@ import LoginModal from './components/LoginModal';
 import UserPanel from './components/UserPanel';
 import UserManagement from './components/UserManagement';
 import Dashboard from './components/Dashboard';
+import SendReportModal from './components/SendReportModal';
 
 const MOCK_ASSETS: Asset[] = [
   {
@@ -100,6 +101,7 @@ const App: React.FC = () => {
   const [isAddInspectionModalOpen, setIsAddInspectionModalOpen] = useState(false);
   const [assetForNewInspection, setAssetForNewInspection] = useState<Asset | null>(null);
   const [isOperatorModalOpen, setIsOperatorModalOpen] = useState(false);
+  const [isSendReportModalOpen, setIsSendReportModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [operator, setOperator] = useState<Operator>({
     name: 'Názov Vašej Firmy s.r.o.',
@@ -387,6 +389,18 @@ const App: React.FC = () => {
               >
                 {showDashboard ? 'Skryť Dashboard' : 'Zobraziť Dashboard'}
               </button>
+              {authService.canManageUsers() && (
+                <button
+                  onClick={() => setIsSendReportModalOpen(true)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2"
+                  title="Odoslať email report o stave revízií"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  Email report
+                </button>
+              )}
               {authService.canExportImport() && (
                 <ExportImport 
                   assets={assets} 
@@ -464,6 +478,13 @@ const App: React.FC = () => {
         <UserManagement
           isOpen={isUserManagementOpen}
           onClose={() => setIsUserManagementOpen(false)}
+        />
+      )}
+
+      {authService.canManageUsers() && (
+        <SendReportModal
+          isOpen={isSendReportModalOpen}
+          onClose={() => setIsSendReportModalOpen(false)}
         />
       )}
 

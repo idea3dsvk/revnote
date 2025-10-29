@@ -1,223 +1,181 @@
-# Firebase Functions - Email Notifications
+# Firebase Cloud Functions - RevNote Email Notifications
 
-Email notifikácie pre pripomienky blížiacich sa revízií pomocou Firebase Functions a SendGrid.
+## Overview
 
-## Funkcie
+This directory contains Firebase Cloud Functions for sending email reports about equipment inspection status. The function is triggered manually by admin users from the application.
 
-### 1. `sendInspectionReminders` (Scheduled)
-- **Spúšťa sa:** Každý deň o 9:00 ráno (Europe/Bratislava)
-- **Účel:** Kontroluje blížiace sa revízie a odosiela email pripomienky
-- **Konfigurácia:** Firestore collection `settings/notifications`
+## Functions
 
-### 2. `triggerInspectionReminders` (HTTP)
-- **Spúšťa sa:** Manuálne cez HTTP volanie
-- **Účel:** Testovanie a manuálne spustenie kontrol
-- **Vyžaduje:** Autentifikáciu
+### `sendInspectionReport` (HTTP Callable)
+**Trigger**: Manual (called from admin UI button)
+**Purpose**: Sends comprehensive email report with all assets categorized by inspection status
 
-### 3. `updateNotificationSettings` (HTTP)
-- **Spúšťa sa:** Cez aplikáciu
-- **Účel:** Aktualizácia nastavení notifikácií
-- **Vyžaduje:** Autentifikáciu
-
-## Inštalácia
-
-### 1. Nainštaluj dependencies
-
-```bash
-cd functions
-npm install
-```
-
-### 2. Nastav SendGrid API Key
-
-#### Lokálne (development):
-```bash
-# Vytvor .env súbor v functions/ priečinku
-echo "SENDGRID_API_KEY=SG.your_api_key_here" > .env
-echo "SENDGRID_FROM_EMAIL=noreply@vasadomena.sk" >> .env
-```
-
-#### Production (Firebase):
-```bash
-firebase functions:config:set sendgrid.apikey="SG.your_api_key_here"
-firebase functions:config:set sendgrid.fromemail="noreply@vasadomena.sk"
-```
-
-### 3. Deploy Firebase Functions
-
-```bash
-# Build TypeScript
-npm run build
-
-# Deploy functions
-firebase deploy --only functions
-```
-
-## SendGrid Setup
-
-### 1. Vytvor SendGrid účet
-1. Choď na https://sendgrid.com/
-2. Zaregistruj sa (Free tier - 100 emailov/deň)
-3. Verify email address
-
-### 2. Vytvor API Key
-1. Settings → API Keys
-2. Create API Key
-3. Full Access (alebo Mail Send)
-4. Skopíruj API key (SG.xxxxxxxxx)
-
-### 3. Verify Sender Identity
-1. Settings → Sender Authentication
-2. Verify Single Sender
-3. Vyplň email a meno
-4. Verify cez email
-
-### 4. (Voliteľné) Custom Domain
-Ak chceš posielať z vlastnej domény:
-1. Settings → Sender Authentication
-2. Authenticate Your Domain
-3. Postupuj podľa inštrukcií (DNS records)
-
-## Firestore Struktura
-
-### Collection: `settings/notifications`
-```javascript
+**Input**:
+```typescript
 {
-  enabled: true,
-  recipients: [
-    "admin@firma.sk",
-    "revisor@firma.sk"
-  ],
-  daysBeforeInspection: [30, 14, 7, 3, 1, 0]
+  recipientEmail: string  // Email address to send report to
 }
 ```
 
-- **enabled:** Zapnuté/vypnuté email notifikácie
-- **recipients:** Zoznam email adries pre príjemcov
-- **daysBeforeInspection:** Počet dní pred revíziou kedy poslať pripomienku
-
-## Použitie v aplikácii
-
-### Inicializácia nastavení
-Pri prvom spustení vytvor Firestore dokument:
-
-```javascript
-db.collection('settings').doc('notifications').set({
-  enabled: true,
-  recipients: ['admin@firma.sk'],
-  daysBeforeInspection: [30, 14, 7, 3, 1, 0]
-});
+**Output**:
+```typescript
+{
+  success: boolean,
+  message: string,  // Slovak success message
+  stats: {
+    overdue: number,    // Count of assets past inspection date
+    dueSoon: number,    // Count of assets with inspection within 30 days
+    ok: number          // Count of assets in good standing
+  }
+}
 ```
 
-### Aktualizácia nastavení cez UI
-```javascript
-const updateSettings = httpsCallable(functions, 'updateNotificationSettings');
+**Report Categories**:
+1. **⚠️ Po termíne** - Assets past inspection date
+2. **📋 Do 30 dní** - Assets with inspection within 30 days
+3. **✅ V poriadku** - Assets with inspection over 30 days away
 
-await updateSettings({
-  enabled: true,
-  recipients: ['admin@firma.sk', 'revisor@firma.sk'],
-  daysBeforeInspection: [30, 14, 7, 3, 1, 0]
-});
+**Security**: Requires authenticated user (checks `context.auth`)
+
+## Setup
+
+### 1. Install Dependencies
+
+```bash
+npm install
 ```
 
-### Manuálne spustenie (pre testovanie)
-```javascript
-const triggerReminders = httpsCallable(functions, 'triggerInspectionReminders');
+### 2. Configure SendGrid
 
-const result = await triggerReminders();
-console.log(result.data); // { success: true, message: '...' }
+Set Firebase config with SendGrid credentials:
+
+```bash
+firebase functions:config:set sendgrid.apikey="YOUR_API_KEY" sendgrid.fromemail="your-verified-email@domain.com"
 ```
 
-## Testovanie Lokálne
+### 3. Build TypeScript
 
-### 1. Spusti emulátory
+```bash
+npm run build
+```
+
+### 4. Deploy Functions
+
+```bash
+firebase deploy --only functions
+```
+
+## Email Templates
+
+### HTML Email
+- Responsive design
+- Color-coded sections (red/yellow/green)
+- Statistics summary at top
+- Asset table with all details
+- Operator information
+- Link to open application
+
+### Plain Text Email
+- Clean text formatting
+- Same information as HTML
+- Compatible with all email clients
+
+## Development
+
+### Local Testing
+
 ```bash
 npm run serve
 ```
 
-### 2. Otestuj funkciu
-V druhom termináli:
+Create `functions/.env` for local testing:
+```
+SENDGRID_API_KEY=SG.xxxxx
+SENDGRID_FROM_EMAIL=your-email@domain.com
+```
+
+### TypeScript Compilation
+
 ```bash
-# HTTP funkcia
-curl http://localhost:5001/revnote-89f0f/europe-west1/triggerInspectionReminders \
-  -H "Authorization: Bearer $(firebase login:ci)" \
-  -H "Content-Type: application/json"
+npm run build
 ```
-
-## GitHub Actions Deployment
-
-Ak chceš automaticky deployovať functions cez GitHub Actions, pridaj do `.github/workflows/deploy.yml`:
-
-```yaml
-- name: Deploy Firebase Functions
-  env:
-    FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-  run: |
-    cd functions
-    npm ci
-    npm run build
-    npx firebase-tools deploy --only functions --token "$FIREBASE_TOKEN"
-```
-
-A pridaj GitHub Secret:
-- **FIREBASE_TOKEN:** Vygeneruj cez `firebase login:ci`
-
-## Cena
-
-### SendGrid (Free tier):
-- 100 emailov/deň zdarma
-- 40,000 emailov/mesiac na Free plane
-
-### Firebase Functions (Spark - Free):
-- 2M volania/mesiac
-- Scheduled functions: zdarma na Blaze plane
-
-**Odporúčanie:** Pre produkčné použitie prejdi na Firebase **Blaze plan** (pay-as-you-go)
-- Scheduled functions fungujú iba na Blaze
-- Prvé 2M volania mesačne stále zdarma
-
-## Email Notifikácie
-
-Emailové notifikácie obsahujú:
-- ✅ Zoznam zariadení s blížiacou sa revíziou
-- ✅ Termín revízie pre každé zariadenie
-- ✅ Urgentnosť (farebné označenie)
-- ✅ Informácie o prevádzkovateľovi
-- ✅ Link na aplikáciu
-- ✅ HTML aj plain text verzia
-
-## Troubleshooting
-
-### Email sa neodosiela
-1. Over SendGrid API key: `firebase functions:config:get`
-2. Over že sender email je verified v SendGrid
-3. Skontroluj logs: `firebase functions:log`
-
-### Function neprebieha scheduled
-1. Over že si na Blaze plane
-2. Skontroluj Cloud Scheduler: https://console.cloud.google.com/cloudscheduler
-3. Over timezone nastavenie
-
-### Permission denied
-1. Firebase Functions potrebujú Admin SDK
-2. Over Firestore rules - functions majú automaticky plný prístup
-
-## Monitoring
 
 ### Logs
+
+View function logs:
 ```bash
-firebase functions:log --only sendInspectionReminders
+firebase functions:log --only sendInspectionReport
 ```
 
-### Firebase Console
-https://console.firebase.google.com/project/revnote-89f0f/functions
+## Dependencies
 
-### SendGrid Email Activity
-https://app.sendgrid.com/email_activity
+- `firebase-functions`: ^4.6.0 - Cloud Functions framework
+- `firebase-admin`: ^12.0.0 - Firebase Admin SDK
+- `@sendgrid/mail`: ^7.7.0 - SendGrid email service
 
-## Bezpečnosť
+## Architecture
 
-- ✅ API keys sú v Firebase config (nie v kóde)
-- ✅ HTTP funkcie vyžadujú autentifikáciu
-- ✅ SendGrid API key má iba Mail Send permission
-- ✅ Email adresy sú validované
+```
+Client (Admin UI Button)
+  ↓ (HTTPS callable function)
+Firebase Cloud Function (sendInspectionReport)
+  ↓ (queries)
+Firestore (assets, operator collections)
+  ↓ (categorizes & formats)
+Email Templates (HTML + Text)
+  ↓ (sends via)
+SendGrid API
+  ↓ (delivers to)
+Recipient Email
+```
+
+## Cost
+
+**Firebase Spark (Free) Plan**:
+- ✅ 125K HTTP callable invocations/month
+- ✅ 50K Firestore reads/day
+- ✅ No Cloud Scheduler needed
+
+**SendGrid Free Tier**:
+- ✅ 100 emails/day
+
+**Total**: $0/month (within free tier limits)
+
+## Security
+
+- Function requires authentication
+- SendGrid API key stored in Firebase config (not in code)
+- Only active (non-excluded) assets included in report
+- Admin-only access enforced in UI
+
+## Error Handling
+
+The function handles:
+- Unauthenticated requests → `HttpsError('unauthenticated')`
+- SendGrid errors → `HttpsError('internal')`
+- Missing configuration → Logs error, returns gracefully
+
+## File Structure
+
+```
+functions/
+├── src/
+│   └── index.ts           # Main function code
+├── package.json           # Dependencies
+├── tsconfig.json         # TypeScript config
+├── .gitignore            # Excludes node_modules, .env, etc.
+└── README.md             # This file
+```
+
+## Next Steps
+
+1. Complete setup in EMAIL_NOTIFICATIONS_SETUP.md
+2. Test email sending from admin account
+3. Monitor SendGrid activity dashboard
+4. Check Firebase function logs for errors
+
+## Support
+
+- **Firebase Functions**: https://firebase.google.com/docs/functions
+- **SendGrid Node.js**: https://github.com/sendgrid/sendgrid-nodejs
+- **TypeScript**: https://www.typescriptlang.org/docs/
