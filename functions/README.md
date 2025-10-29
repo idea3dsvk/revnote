@@ -7,17 +7,20 @@ This directory contains Firebase Cloud Functions for sending email reports about
 ## Functions
 
 ### `sendInspectionReport` (HTTP Callable)
+
 **Trigger**: Manual (called from admin UI button)
 **Purpose**: Sends comprehensive email report with all assets categorized by inspection status
 
 **Input**:
+
 ```typescript
 {
-  recipientEmail: string  // Email address to send report to
+  recipientEmail: string; // Email address to send report to
 }
 ```
 
 **Output**:
+
 ```typescript
 {
   success: boolean,
@@ -31,6 +34,7 @@ This directory contains Firebase Cloud Functions for sending email reports about
 ```
 
 **Report Categories**:
+
 1. **⚠️ Po termíne** - Assets past inspection date
 2. **📋 Do 30 dní** - Assets with inspection within 30 days
 3. **✅ V poriadku** - Assets with inspection over 30 days away
@@ -68,6 +72,7 @@ firebase deploy --only functions
 ## Email Templates
 
 ### HTML Email
+
 - Responsive design
 - Color-coded sections (red/yellow/green)
 - Statistics summary at top
@@ -76,6 +81,7 @@ firebase deploy --only functions
 - Link to open application
 
 ### Plain Text Email
+
 - Clean text formatting
 - Same information as HTML
 - Compatible with all email clients
@@ -89,6 +95,7 @@ npm run serve
 ```
 
 Create `functions/.env` for local testing:
+
 ```
 SENDGRID_API_KEY=SG.xxxxx
 SENDGRID_FROM_EMAIL=your-email@domain.com
@@ -103,6 +110,7 @@ npm run build
 ### Logs
 
 View function logs:
+
 ```bash
 firebase functions:log --only sendInspectionReport
 ```
@@ -132,11 +140,13 @@ Recipient Email
 ## Cost
 
 **Firebase Spark (Free) Plan**:
+
 - ✅ 125K HTTP callable invocations/month
 - ✅ 50K Firestore reads/day
 - ✅ No Cloud Scheduler needed
 
 **SendGrid Free Tier**:
+
 - ✅ 100 emails/day
 
 **Total**: $0/month (within free tier limits)
@@ -151,6 +161,7 @@ Recipient Email
 ## Error Handling
 
 The function handles:
+
 - Unauthenticated requests → `HttpsError('unauthenticated')`
 - SendGrid errors → `HttpsError('internal')`
 - Missing configuration → Logs error, returns gracefully
