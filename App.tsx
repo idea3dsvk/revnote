@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { Toaster } from 'react-hot-toast';
 import { Asset, Inspection, InspectionStatus, UsageType, UsageGroup, Operator, User } from './types';
 import persistence from './services/persistence';
 import authService from './services/authService';
+import toastService from './services/toastService';
 import AssetList from './components/AssetList';
 import AssetDetail from './components/AssetDetail';
 import AddAssetModal from './components/AddAssetModal';
@@ -96,6 +98,7 @@ const App: React.FC = () => {
   const [isAddInspectionModalOpen, setIsAddInspectionModalOpen] = useState(false);
   const [assetForNewInspection, setAssetForNewInspection] = useState<Asset | null>(null);
   const [isOperatorModalOpen, setIsOperatorModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [operator, setOperator] = useState<Operator>({
     name: 'Názov Vašej Firmy s.r.o.',
     address: 'Príkladová 123, 811 01 Bratislava',
@@ -115,6 +118,7 @@ const App: React.FC = () => {
   useEffect(() => {
     // Load data from Firebase/localStorage
     const loadData = async () => {
+      setIsLoading(true);
       try {
         const loadedAssets = await persistence.loadAssets();
         const loadedOperator = await persistence.loadOperator();
@@ -137,12 +141,15 @@ const App: React.FC = () => {
         }
       } catch (error) {
         console.error('Error loading data:', error);
+        toastService.error('Chyba pri načítavaní dát. Použité vzorové dáta.');
         // Fallback to mock data on error
         const initialAssets = JSON.parse(JSON.stringify(MOCK_ASSETS));
         setAssets(initialAssets);
         if (initialAssets.length > 0) {
           setSelectedAssetId(initialAssets[0].id);
         }
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -180,81 +187,117 @@ const App: React.FC = () => {
     });
   }, []);
   
-  const handleSaveOperator = (data: Operator) => {
-    setOperator(data);
-    setIsOperatorModalOpen(false);
+  const handleSaveOperator = async (data: Operator) => {
+    try {
+      setOperator(data);
+      setIsOperatorModalOpen(false);
+      toastService.success('Údaje prevádzkovateľa boli uložené');
+    } catch (error) {
+      toastService.error('Chyba pri ukladaní prevádzkovateľa');
+      console.error('Error saving operator:', error);
+    }
   };
 
-  const handleAddAsset = (assetData: Omit<Asset, 'id' | 'inspections' | 'nextInspectionDate' | 'isExcluded'>) => {
-    const newAsset: Asset = {
-      ...assetData,
-      id: new Date().toISOString(),
-      // The next inspection date is initially set to the purchase date.
-      // It will be properly updated after the first inspection is added.
-      nextInspectionDate: assetData.purchaseDate,
-      inspections: [],
-      isExcluded: false,
-    };
-    setAssets(prevAssets => [...prevAssets, newAsset]);
-    setSelectedAssetId(newAsset.id);
+  const handleAddAsset = async (assetData: Omit<Asset, 'id' | 'inspections' | 'nextInspectionDate' | 'isExcluded'>) => {
+    try {
+      const newAsset: Asset = {
+        ...assetData,
+        id: new Date().toISOString(),
+        // The next inspection date is initially set to the purchase date.
+        // It will be properly updated after the first inspection is added.
+        nextInspectionDate: assetData.purchaseDate,
+        inspections: [],
+        isExcluded: false,
+      };
+      setAssets(prevAssets => [...prevAssets, newAsset]);
+      setSelectedAssetId(newAsset.id);
+      toastService.success(`Zariadenie "${newAsset.name}" bolo pridané`);
+    } catch (error) {
+      toastService.error('Chyba pri pridávaní zariadenia');
+      console.error('Error adding asset:', error);
+    }
   };
   
   const handleAddInspection = (newInspectionData: Omit<Inspection, 'id'>) => {
     if (!assetForNewInspection) return;
 
-    const newInspection: Inspection = {
-        ...newInspectionData,
-        id: new Date().toISOString(),
-    };
-    
-    const newNextInspectionDate = calculateNextInspectionDate(
-        newInspection.date, 
-        assetForNewInspection.usageType, 
-        assetForNewInspection.usageGroup
-    );
+    try {
+      const newInspection: Inspection = {
+          ...newInspectionData,
+          id: new Date().toISOString(),
+      };
+      
+      const newNextInspectionDate = calculateNextInspectionDate(
+          newInspection.date, 
+          assetForNewInspection.usageType, 
+          assetForNewInspection.usageGroup
+      );
 
-    setAssets(prevAssets =>
-        prevAssets.map(asset =>
-            asset.id === assetForNewInspection.id
-                ? { 
-                    ...asset, 
-                    inspections: [...asset.inspections, newInspection],
-                    nextInspectionDate: newNextInspectionDate
-                  }
-                : asset
-        )
-    );
+      setAssets(prevAssets =>
+          prevAssets.map(asset =>
+              asset.id === assetForNewInspection.id
+                  ? { 
+                      ...asset, 
+                      inspections: [...asset.inspections, newInspection],
+                      nextInspectionDate: newNextInspectionDate
+                    }
+                  : asset
+          )
+      );
+      toastService.success('Revízia bola pridaná');
+    } catch (error) {
+      toastService.error('Chyba pri pridávaní revízie');
+      console.error('Error adding inspection:', error);
+    }
   };
 
   const handleExcludeAsset = (assetId: string) => {
-    setAssets(prevAssets =>
-      prevAssets.map(asset =>
-        asset.id === assetId
-          ? { ...asset, isExcluded: true }
-          : asset
-      )
-    );
-    // If the excluded asset was selected, deselect it
-    if (selectedAssetId === assetId) {
-        setSelectedAssetId(null);
+    try {
+      setAssets(prevAssets =>
+        prevAssets.map(asset =>
+          asset.id === assetId
+            ? { ...asset, isExcluded: true }
+            : asset
+        )
+      );
+      // If the excluded asset was selected, deselect it
+      if (selectedAssetId === assetId) {
+          setSelectedAssetId(null);
+      }
+      toastService.success('Zariadenie bolo vylúčené z evidencie');
+    } catch (error) {
+      toastService.error('Chyba pri vylučovaní zariadenia');
+      console.error('Error excluding asset:', error);
     }
   };
 
   const handleRestoreAsset = (assetId: string) => {
-    setAssets(prevAssets =>
-      prevAssets.map(asset =>
-        asset.id === assetId
+    try {
+      setAssets(prevAssets =>
+        prevAssets.map(asset =>
+          asset.id === assetId
           ? { ...asset, isExcluded: false }
           : asset
       )
     );
+      toastService.success('Zariadenie bolo obnovené do evidencie');
+    } catch (error) {
+      toastService.error('Chyba pri obnovovaní zariadenia');
+      console.error('Error restoring asset:', error);
+    }
   };
 
   const handleDeleteAsset = (assetId: string) => {
-    setAssets(prevAssets => prevAssets.filter(asset => asset.id !== assetId));
-    // If the deleted asset was selected, deselect it
-    if (selectedAssetId === assetId) {
-        setSelectedAssetId(null);
+    try {
+      setAssets(prevAssets => prevAssets.filter(asset => asset.id !== assetId));
+      // If the deleted asset was selected, deselect it
+      if (selectedAssetId === assetId) {
+          setSelectedAssetId(null);
+      }
+      toastService.success('Zariadenie bolo vymazané');
+    } catch (error) {
+      toastService.error('Chyba pri mazaní zariadenia');
+      console.error('Error deleting asset:', error);
     }
   };
 
@@ -308,10 +351,24 @@ const App: React.FC = () => {
     return <LoginModal onLoginSuccess={handleLoginSuccess} />;
   }
 
+  // Loading screen
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mb-4"></div>
+          <p className="text-gray-600 text-lg">Načítavam dáta...</p>
+        </div>
+      </div>
+    );
+  }
+
   const selectedAsset = assets.find(asset => asset.id === selectedAssetId);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-100">
+    <>
+      <Toaster />
+      <div className="min-h-screen flex flex-col bg-gray-100">
       <header className="bg-white shadow-md w-full">
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center gap-4">
             <h1 className="text-2xl md:text-3xl font-bold leading-tight text-gray-900">
@@ -396,6 +453,7 @@ const App: React.FC = () => {
       <GeminiAssistant assets={assets} />
 
     </div>
+    </>
   );
 };
 
