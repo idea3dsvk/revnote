@@ -1,6 +1,6 @@
 import { initializeApp, FirebaseApp } from 'firebase/app';
 import { getFirestore, Firestore } from 'firebase/firestore';
-import { getAuth, Auth } from 'firebase/auth';
+import { getAuth, Auth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { initializeAppCheck, ReCaptchaV3Provider } from '@firebase/app-check';
 
 // Firebase konfigurácia - tieto hodnoty získate z Firebase Console
@@ -26,6 +26,15 @@ if (isFirebaseConfigured) {
     app = initializeApp(firebaseConfig);
     db = getFirestore(app);
     auth = getAuth(app);
+    
+    // Anonymous sign-in pre zabezpečenie Firestore
+    signInAnonymously(auth)
+      .then(() => {
+        console.log('Firebase: Anonymous user signed in');
+      })
+      .catch((error) => {
+        console.error('Firebase: Anonymous sign-in failed:', error);
+      });
     
     // Initialize App Check s reCAPTCHA v3
     const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
