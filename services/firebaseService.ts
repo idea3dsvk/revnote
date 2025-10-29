@@ -8,10 +8,14 @@ import {
   query,
   where,
   onSnapshot,
-  writeBatch
+  writeBatch,
+  Firestore
 } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from './firebaseConfig';
 import { Asset, Operator, User } from '../types';
+
+// Helper function to get db with type assertion
+const getDb = (): Firestore => db as Firestore;
 
 // Kolekcie v Firestore
 const COLLECTIONS = {
@@ -30,10 +34,10 @@ export const syncAssetsToFirebase = async (assets: Asset[]): Promise<void> => {
   }
 
   try {
-    const batch = writeBatch(db);
+    const batch = writeBatch(getDb() as Firestore);
     
     assets.forEach(asset => {
-      const assetRef = doc(db, COLLECTIONS.ASSETS, asset.id);
+      const assetRef = doc(db as Firestore, COLLECTIONS.ASSETS, asset.id);
       batch.set(assetRef, asset);
     });
     
@@ -51,7 +55,7 @@ export const loadAssetsFromFirebase = async (): Promise<Asset[]> => {
   }
 
   try {
-    const assetsCollection = collection(db, COLLECTIONS.ASSETS);
+    const assetsCollection = collection(getDb(), COLLECTIONS.ASSETS);
     const snapshot = await getDocs(assetsCollection);
     const assets = snapshot.docs.map(doc => doc.data() as Asset);
     console.log('Assets loaded from Firebase:', assets.length);
@@ -68,7 +72,7 @@ export const saveAssetToFirebase = async (asset: Asset): Promise<void> => {
   }
 
   try {
-    const assetRef = doc(db, COLLECTIONS.ASSETS, asset.id);
+    const assetRef = doc(getDb(), COLLECTIONS.ASSETS, asset.id);
     await setDoc(assetRef, asset);
     console.log('Asset saved to Firebase:', asset.id);
   } catch (error) {
@@ -83,7 +87,7 @@ export const deleteAssetFromFirebase = async (assetId: string): Promise<void> =>
   }
 
   try {
-    const assetRef = doc(db, COLLECTIONS.ASSETS, assetId);
+    const assetRef = doc(getDb(), COLLECTIONS.ASSETS, assetId);
     await deleteDoc(assetRef);
     console.log('Asset deleted from Firebase:', assetId);
   } catch (error) {
@@ -100,7 +104,7 @@ export const saveOperatorToFirebase = async (operator: Operator): Promise<void> 
   }
 
   try {
-    const operatorRef = doc(db, COLLECTIONS.OPERATOR, 'current');
+    const operatorRef = doc(getDb(), COLLECTIONS.OPERATOR, 'current');
     await setDoc(operatorRef, operator);
     console.log('Operator saved to Firebase');
   } catch (error) {
@@ -115,8 +119,8 @@ export const loadOperatorFromFirebase = async (): Promise<Operator | null> => {
   }
 
   try {
-    const operatorRef = doc(db, COLLECTIONS.OPERATOR, 'current');
-    const snapshot = await getDocs(collection(db, COLLECTIONS.OPERATOR));
+    const operatorRef = doc(getDb(), COLLECTIONS.OPERATOR, 'current');
+    const snapshot = await getDocs(collection(getDb(), COLLECTIONS.OPERATOR));
     
     if (snapshot.empty) {
       return null;
@@ -138,10 +142,10 @@ export const syncUsersToFirebase = async (users: User[]): Promise<void> => {
   }
 
   try {
-    const batch = writeBatch(db);
+    const batch = writeBatch(getDb());
     
     users.forEach(user => {
-      const userRef = doc(db, COLLECTIONS.USERS, user.id);
+      const userRef = doc(getDb(), COLLECTIONS.USERS, user.id);
       batch.set(userRef, user);
     });
     
@@ -159,7 +163,7 @@ export const loadUsersFromFirebase = async (): Promise<User[]> => {
   }
 
   try {
-    const usersCollection = collection(db, COLLECTIONS.USERS);
+    const usersCollection = collection(getDb(), COLLECTIONS.USERS);
     const snapshot = await getDocs(usersCollection);
     const users = snapshot.docs.map(doc => doc.data() as User);
     console.log('Users loaded from Firebase:', users.length);
@@ -177,7 +181,7 @@ export const subscribeToAssets = (callback: (assets: Asset[]) => void): (() => v
     return () => {};
   }
 
-  const assetsCollection = collection(db, COLLECTIONS.ASSETS);
+  const assetsCollection = collection(getDb(), COLLECTIONS.ASSETS);
   
   const unsubscribe = onSnapshot(assetsCollection, (snapshot) => {
     const assets = snapshot.docs.map(doc => doc.data() as Asset);
@@ -194,7 +198,7 @@ export const subscribeToOperator = (callback: (operator: Operator | null) => voi
     return () => {};
   }
 
-  const operatorCollection = collection(db, COLLECTIONS.OPERATOR);
+  const operatorCollection = collection(getDb(), COLLECTIONS.OPERATOR);
   
   const unsubscribe = onSnapshot(operatorCollection, (snapshot) => {
     if (snapshot.empty) {

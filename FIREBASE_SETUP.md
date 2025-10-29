@@ -35,6 +35,7 @@ service cloud.firestore {
 ```
 
 **Alebo pre začiatok (test mode - NEBEZPEČNÉ pre produkciu!):**
+
 ```javascript
 rules_version = '2';
 service cloud.firestore {
@@ -58,11 +59,13 @@ service cloud.firestore {
 ## 5. Nastavenie v aplikácii
 
 1. **Vytvorte `.env` súbor** v root priečinku projektu:
+
 ```bash
 cp .env.example .env
 ```
 
 2. **Vyplňte Firebase credentials** do `.env`:
+
 ```env
 VITE_FIREBASE_API_KEY=AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXX
 VITE_FIREBASE_AUTH_DOMAIN=revnote-xxxxx.firebaseapp.com
@@ -73,6 +76,7 @@ VITE_FIREBASE_APP_ID=1:123456789012:web:xxxxxxxxxxxx
 ```
 
 3. **Reštartujte dev server**:
+
 ```bash
 npm run dev
 ```
@@ -101,6 +105,7 @@ npm run dev
 Súbor `.github/workflows/deploy.yml` už obsahuje správnu konfiguráciu.
 
 Po nastavení secrets stačí:
+
 ```bash
 git push
 ```
@@ -117,15 +122,18 @@ git push
 ## 9. Troubleshooting
 
 ### Problém: "Firebase not configured"
+
 - Skontrolujte či `.env` súbor existuje
 - Overte že všetky premenné začínajú `VITE_`
 - Reštartujte dev server (`Ctrl+C` a znovu `npm run dev`)
 
 ### Problém: "Permission denied"
+
 - Skontrolujte Security Rules vo Firestore
 - Pre testovanie použite test mode (allow read, write: if true)
 
 ### Problém: Dáta sa neukladajú
+
 - Otvorte Developer Console (F12) a skontrolujte chyby
 - Overte že Firestore je aktivovaná
 - Skontrolujte Security Rules
