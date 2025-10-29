@@ -74,6 +74,18 @@ const Dashboard: React.FC<DashboardProps> = ({ assets }) => {
     return days !== null && days < 0;
   });
 
+  // Revízie pridané za posledný týždeň
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+  
+  const recentInspections = assets.flatMap(asset => 
+    asset.inspections
+      .filter(inspection => new Date(inspection.date) >= oneWeekAgo)
+      .map(inspection => ({ ...inspection, assetName: asset.name }))
+  );
+  
+  const recentInspectionsCount = recentInspections.length;
+
   // Priemer dní do ďalšej revízie (iba pre aktívne zariadenia s revíziami)
   const activeAssetsWithInspections = assets.filter(
     a => !a.isExcluded && a.inspections.length > 0
@@ -85,11 +97,6 @@ const Dashboard: React.FC<DashboardProps> = ({ assets }) => {
           return sum + (days || 0);
         }, 0) / activeAssetsWithInspections.length
       )
-    : 0;
-
-  // Percentuálny pomer
-  const passPercentage = stats.total > 0 
-    ? Math.round((stats.pass / (stats.total - stats.excluded)) * 100) 
     : 0;
 
   const statCards = [
@@ -157,22 +164,34 @@ const Dashboard: React.FC<DashboardProps> = ({ assets }) => {
 
       {/* Dodatočné štatistiky */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Percentuálny úspech */}
+        {/* Revízie za posledný týždeň */}
         <div className="bg-white rounded-lg shadow-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-3">Percentuálny úspech</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-3">Nové revízie za týždeň</h3>
           <div className="flex items-end justify-center">
-            <span className="text-5xl font-bold text-primary-600">{passPercentage}</span>
-            <span className="text-2xl font-semibold text-gray-500 mb-1 ml-1">%</span>
+            <span className="text-5xl font-bold text-blue-600">{recentInspectionsCount}</span>
           </div>
           <p className="text-center text-sm text-gray-500 mt-2">
-            zariadení vyhovuje požiadavkám
+            {recentInspectionsCount === 1 ? 'revízia' : recentInspectionsCount < 5 ? 'revízie' : 'revízií'} za posledných 7 dní
           </p>
-          <div className="mt-4 bg-gray-200 rounded-full h-3 overflow-hidden">
-            <div
-              className="bg-green-500 h-full transition-all duration-500"
-              style={{ width: `${passPercentage}%` }}
-            ></div>
-          </div>
+          {recentInspections.length > 0 && (
+            <div className="mt-4 max-h-32 overflow-y-auto">
+              <ul className="text-sm space-y-1">
+                {recentInspections.slice(0, 5).map((inspection, index) => (
+                  <li key={`${inspection.id}-${index}`} className="text-gray-700 flex justify-between items-center">
+                    <span className="truncate">{inspection.assetName}</span>
+                    <span className={`text-xs font-semibold ml-2 ${
+                      inspection.status === InspectionStatus.PASS ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {inspection.status === InspectionStatus.PASS ? '✓' : '✗'}
+                    </span>
+                  </li>
+                ))}
+                {recentInspections.length > 5 && (
+                  <li className="text-gray-500 italic">+{recentInspections.length - 5} ďalších</li>
+                )}
+              </ul>
+            </div>
+          )}
         </div>
 
         {/* Revízie do 30 dní */}
