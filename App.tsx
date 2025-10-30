@@ -162,10 +162,19 @@ const App: React.FC = () => {
 
   // Real-time synchronization with Firebase
   useEffect(() => {
+    let isInitialLoad = true;
+    
     import('./services/firebaseService').then(({ default: firebaseService }) => {
       // Subscribe to assets changes
       const unsubscribeAssets = firebaseService.subscribeToAssets((updatedAssets: Asset[]) => {
         if (updatedAssets.length > 0) {
+          // Skip initial load to prevent overwriting local state during initialization
+          if (isInitialLoad) {
+            isInitialLoad = false;
+            console.log('Skipping initial Firebase sync to preserve local state');
+            return;
+          }
+          
           setAssets(updatedAssets);
           localStorage.setItem('evr_assets_v1', JSON.stringify(updatedAssets));
           console.log('Assets updated from Firebase (real-time):', updatedAssets.length);
@@ -213,8 +222,15 @@ const App: React.FC = () => {
         inspections: [],
         isExcluded: false,
       };
-      setAssets(prevAssets => [...prevAssets, newAsset]);
+      
+      // Update local state
+      const updatedAssets = [...assets, newAsset];
+      setAssets(updatedAssets);
       setSelectedAssetId(newAsset.id);
+      
+      // Immediately save to Firebase and localStorage
+      await persistence.saveAssets(updatedAssets);
+      
       toastService.success(`Zariadenie "${newAsset.name}" bolo pridané`);
     } catch (error) {
       toastService.error('Chyba pri pridávaní zariadenia');
@@ -222,7 +238,7 @@ const App: React.FC = () => {
     }
   };
   
-  const handleAddInspection = (newInspectionData: Omit<Inspection, 'id'>) => {
+  const handleAddInspection = async (newInspectionData: Omit<Inspection, 'id'>) => {
     if (!assetForNewInspection) return;
 
     try {
@@ -237,17 +253,21 @@ const App: React.FC = () => {
           assetForNewInspection.usageGroup
       );
 
-      setAssets(prevAssets =>
-          prevAssets.map(asset =>
-              asset.id === assetForNewInspection.id
-                  ? { 
-                      ...asset, 
-                      inspections: [...asset.inspections, newInspection],
-                      nextInspectionDate: newNextInspectionDate
-                    }
-                  : asset
-          )
+      const updatedAssets = assets.map(asset =>
+          asset.id === assetForNewInspection.id
+              ? { 
+                  ...asset, 
+                  inspections: [...asset.inspections, newInspection],
+                  nextInspectionDate: newNextInspectionDate
+                }
+              : asset
       );
+      
+      setAssets(updatedAssets);
+      
+      // Immediately save to Firebase and localStorage
+      await persistence.saveAssets(updatedAssets);
+      
       toastService.success('Revízia bola pridaná');
     } catch (error) {
       toastService.error('Chyba pri pridávaní revízie');
@@ -255,19 +275,24 @@ const App: React.FC = () => {
     }
   };
 
-  const handleExcludeAsset = (assetId: string) => {
+  const handleExcludeAsset = async (assetId: string) => {
     try {
-      setAssets(prevAssets =>
-        prevAssets.map(asset =>
-          asset.id === assetId
-            ? { ...asset, isExcluded: true }
-            : asset
-        )
+      const updatedAssets = assets.map(asset =>
+        asset.id === assetId
+          ? { ...asset, isExcluded: true }
+          : asset
       );
+      
+      setAssets(updatedAssets);
+      
       // If the excluded asset was selected, deselect it
       if (selectedAssetId === assetId) {
           setSelectedAssetId(null);
       }
+      
+      // Immediately save to Firebase and localStorage
+      await persistence.saveAssets(updatedAssets);
+      
       toastService.success('Zariadenie bolo vylúčené z evidencie');
     } catch (error) {
       toastService.error('Chyba pri vylučovaní zariadenia');
@@ -275,15 +300,19 @@ const App: React.FC = () => {
     }
   };
 
-  const handleRestoreAsset = (assetId: string) => {
+  const handleRestoreAsset = async (assetId: string) => {
     try {
-      setAssets(prevAssets =>
-        prevAssets.map(asset =>
-          asset.id === assetId
+      const updatedAssets = assets.map(asset =>
+        asset.id === assetId
           ? { ...asset, isExcluded: false }
           : asset
-      )
-    );
+      );
+      
+      setAssets(updatedAssets);
+      
+      // Immediately save to Firebase and localStorage
+      await persistence.saveAssets(updatedAssets);
+      
       toastService.success('Zariadenie bolo obnovené do evidencie');
     } catch (error) {
       toastService.error('Chyba pri obnovovaní zariadenia');
@@ -291,13 +320,20 @@ const App: React.FC = () => {
     }
   };
 
-  const handleDeleteAsset = (assetId: string) => {
+  const handleDeleteAsset = async (assetId: string) => {
     try {
-      setAssets(prevAssets => prevAssets.filter(asset => asset.id !== assetId));
+      const updatedAssets = assets.filter(asset => asset.id !== assetId);
+      
+      setAssets(updatedAssets);
+      
       // If the deleted asset was selected, deselect it
       if (selectedAssetId === assetId) {
           setSelectedAssetId(null);
       }
+      
+      // Immediately save to Firebase and localStorage
+      await persistence.saveAssets(updatedAssets);
+      
       toastService.success('Zariadenie bolo vymazané');
     } catch (error) {
       toastService.error('Chyba pri mazaní zariadenia');
@@ -305,15 +341,8 @@ const App: React.FC = () => {
     }
   };
 
-  // Persist assets, operator and selected asset id whenever they change
-  useEffect(() => {
-    try {
-      persistence.saveAssets(assets);
-    } catch (e) {
-      // already handled in persistence
-    }
-  }, [assets]);
-
+  // Note: Assets are now saved explicitly in each handler function to ensure immediate Firebase sync
+  // Operator is still saved via useEffect since it's updated less frequently
   useEffect(() => {
     if (operator) {
       persistence.saveOperator(operator);
