@@ -194,10 +194,18 @@ const AssetDetail: React.FC<AssetDetailProps> = ({
                     </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                    {sortedInspections.length > 0 ? sortedInspections.map((inspection: Inspection) => (
+                    {sortedInspections.length > 0 ? sortedInspections.map((inspection: Inspection) => {
+                      // Extract timestamp from ID for display
+                      const createdAt = new Date(inspection.id);
+                      const timeString = createdAt.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' });
+                      
+                      return (
                     <React.Fragment key={inspection.id}>
                       <tr onClick={() => handleToggleInspection(inspection.id)} className="cursor-pointer hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{new Date(inspection.date).toLocaleDateString('sk-SK')}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {new Date(inspection.date).toLocaleDateString('sk-SK')}
+                            <span className="ml-2 text-xs text-gray-500">({timeString})</span>
+                          </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{inspection.inspectorName}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><Badge status={inspection.status} /></td>
                           <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">{inspection.notes}</td>
@@ -220,7 +228,8 @@ const AssetDetail: React.FC<AssetDetailProps> = ({
                         </tr>
                       )}
                     </React.Fragment>
-                    )) : (
+                    );
+                    }) : (
                         <tr>
                             <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">Žiadne revízie neboli vykonané.</td>
                         </tr>

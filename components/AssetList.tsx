@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Asset, InspectionStatus } from '../types';
+import { Asset, Inspection, InspectionStatus } from '../types';
 import Badge from './Badge';
 import PlusIcon from './icons/PlusIcon';
 import BuildingOfficeIcon from './icons/BuildingOfficeIcon';
@@ -16,21 +16,26 @@ interface AssetListProps {
 
 const ITEMS_PER_PAGE = 6;
 
+// Helper function to get the latest inspection based on ID (which contains ISO timestamp)
+// This is more accurate than sorting by date field which only contains the date without time
+const getLatestInspection = (inspections: Inspection[]): Inspection | null => {
+    if (inspections.length === 0) return null;
+    
+    // Sort by ID (ISO timestamp) in descending order (newest first)
+    const sorted = [...inspections].sort((a, b) => b.id.localeCompare(a.id));
+    return sorted[0];
+};
+
 const getAssetStatus = (asset: Asset): InspectionStatus => {
     if (asset.isExcluded) {
         return InspectionStatus.EXCLUDED;
     }
 
-    if (asset.inspections.length === 0) {
+    const latestInspection = getLatestInspection(asset.inspections);
+    
+    if (!latestInspection) {
         return InspectionStatus.DUE;
     }
-
-    // Sort inspections by date (newest first) to ensure we get the latest one
-    const sortedInspections = [...asset.inspections].sort((a, b) => 
-        new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-    
-    const latestInspection = sortedInspections[0];
 
     // If the latest inspection failed, the overall status is FAIL
     if (latestInspection.status === InspectionStatus.FAIL) {
@@ -57,17 +62,11 @@ const getDaysUntilNextInspection = (asset: Asset): { text: string; className: st
         return { text: 'Vylúčené z evidencie', className: 'text-gray-500' };
     }
     
-    const hasNoInspections = asset.inspections.length === 0;
-    if (hasNoInspections) {
+    const latestInspection = getLatestInspection(asset.inspections);
+    
+    if (!latestInspection) {
         return { text: 'Plánovaná', className: 'text-blue-600 font-semibold' };
     }
-
-    // Sort inspections by date (newest first) to ensure we get the latest one
-    const sortedInspections = [...asset.inspections].sort((a, b) => 
-        new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-    
-    const latestInspection = sortedInspections[0];
     
     if (latestInspection.status === InspectionStatus.FAIL) {
         return { text: 'Nevyhovuje', className: 'text-red-600 font-semibold' };
