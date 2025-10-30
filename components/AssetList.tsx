@@ -25,10 +25,12 @@ const getAssetStatus = (asset: Asset): InspectionStatus => {
         return InspectionStatus.DUE;
     }
 
-    // Find the latest inspection using a robust reduce method to avoid side-effects
-    const latestInspection = asset.inspections.reduce((latest, current) => 
-        new Date(current.date) > new Date(latest.date) ? current : latest
+    // Sort inspections by date (newest first) to ensure we get the latest one
+    const sortedInspections = [...asset.inspections].sort((a, b) => 
+        new Date(b.date).getTime() - new Date(a.date).getTime()
     );
+    
+    const latestInspection = sortedInspections[0];
 
     // If the latest inspection failed, the overall status is FAIL
     if (latestInspection.status === InspectionStatus.FAIL) {
@@ -60,10 +62,12 @@ const getDaysUntilNextInspection = (asset: Asset): { text: string; className: st
         return { text: 'Plánovaná', className: 'text-blue-600 font-semibold' };
     }
 
-    // Find the latest inspection using a robust reduce method
-    const latestInspection = asset.inspections.reduce((latest, current) => 
-        new Date(current.date) > new Date(latest.date) ? current : latest
+    // Sort inspections by date (newest first) to ensure we get the latest one
+    const sortedInspections = [...asset.inspections].sort((a, b) => 
+        new Date(b.date).getTime() - new Date(a.date).getTime()
     );
+    
+    const latestInspection = sortedInspections[0];
     
     if (latestInspection.status === InspectionStatus.FAIL) {
         return { text: 'Nevyhovuje', className: 'text-red-600 font-semibold' };
