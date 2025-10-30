@@ -84,7 +84,7 @@ npm run dev
 ## 6. Overenie funkčnosti
 
 1. Otvorte aplikáciu v prehliadači
-2. Prihláste sa (admin/admin123)
+2. Prihláste sa
 3. Pridajte náradie alebo revíziu
 4. V Firebase Console > **Firestore Database** by ste mali vidieť nové dáta
 
