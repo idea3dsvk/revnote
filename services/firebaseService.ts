@@ -27,6 +27,26 @@ const COLLECTIONS = {
 
 // ============= ASSETS =============
 
+// Helper to remove undefined values from objects (Firebase doesn't accept undefined)
+const cleanUndefined = <T extends Record<string, any>>(obj: T): T => {
+  const cleaned = {} as T;
+  Object.keys(obj).forEach(key => {
+    const value = obj[key];
+    if (value !== undefined) {
+      if (Array.isArray(value)) {
+        cleaned[key as keyof T] = value.map(item => 
+          typeof item === 'object' && item !== null ? cleanUndefined(item) : item
+        ) as T[keyof T];
+      } else if (typeof value === 'object' && value !== null) {
+        cleaned[key as keyof T] = cleanUndefined(value);
+      } else {
+        cleaned[key as keyof T] = value;
+      }
+    }
+  });
+  return cleaned;
+};
+
 export const syncAssetsToFirebase = async (assets: Asset[]): Promise<void> => {
   if (!isFirebaseConfigured || !db) {
     console.warn('Firebase not configured, skipping sync');
@@ -38,7 +58,9 @@ export const syncAssetsToFirebase = async (assets: Asset[]): Promise<void> => {
     
     assets.forEach(asset => {
       const assetRef = doc(db as Firestore, COLLECTIONS.ASSETS, asset.id);
-      batch.set(assetRef, asset);
+      // Clean undefined values before saving to Firebase
+      const cleanedAsset = cleanUndefined(asset);
+      batch.set(assetRef, cleanedAsset);
     });
     
     await batch.commit();
@@ -73,7 +95,9 @@ export const saveAssetToFirebase = async (asset: Asset): Promise<void> => {
 
   try {
     const assetRef = doc(getDb(), COLLECTIONS.ASSETS, asset.id);
-    await setDoc(assetRef, asset);
+    // Clean undefined values before saving to Firebase
+    const cleanedAsset = cleanUndefined(asset);
+    await setDoc(assetRef, cleanedAsset);
     console.log('Asset saved to Firebase:', asset.id);
   } catch (error) {
     console.error('Error saving asset to Firebase:', error);
