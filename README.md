@@ -147,7 +147,7 @@ Administrator môže spravovať používateľské účty cez panel "Správa pou�
 
 ## Licencia
 
-Tento projekt je voľne použiteľný pre osobné aj komerčné účely.
+Všetky práva vyhradené.
 
 ## Podpora
 
