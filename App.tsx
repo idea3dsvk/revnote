@@ -335,7 +335,11 @@ const App: React.FC = () => {
           setSelectedAssetId(null);
       }
       
-      // Immediately save to Firebase and localStorage
+      // Delete from Firebase explicitly first
+      const { default: firebaseService } = await import('./services/firebaseService');
+      await firebaseService.deleteAssetFromFirebase(assetId);
+      
+      // Then save updated list to localStorage
       await persistence.saveAssets(updatedAssets);
       
       toastService.success('Zariadenie bolo vymazané');
