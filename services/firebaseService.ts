@@ -129,7 +129,9 @@ export const saveOperatorToFirebase = async (operator: Operator): Promise<void> 
 
   try {
     const operatorRef = doc(getDb(), COLLECTIONS.OPERATOR, 'current');
-    await setDoc(operatorRef, operator);
+    // Clean undefined values before saving to Firebase
+    const cleanedOperator = cleanUndefined(operator);
+    await setDoc(operatorRef, cleanedOperator);
     console.log('Operator saved to Firebase');
   } catch (error) {
     console.error('Error saving operator to Firebase:', error);

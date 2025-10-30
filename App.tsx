@@ -203,6 +203,10 @@ const App: React.FC = () => {
   const handleSaveOperator = async (data: Operator) => {
     try {
       setOperator(data);
+      
+      // Immediately save to Firebase and localStorage
+      await persistence.saveOperator(data);
+      
       setIsOperatorModalOpen(false);
       toastService.success('Údaje prevádzkovateľa boli uložené');
     } catch (error) {
@@ -341,13 +345,7 @@ const App: React.FC = () => {
     }
   };
 
-  // Note: Assets are now saved explicitly in each handler function to ensure immediate Firebase sync
-  // Operator is still saved via useEffect since it's updated less frequently
-  useEffect(() => {
-    if (operator) {
-      persistence.saveOperator(operator);
-    }
-  }, [operator]);
+  // Note: Assets and Operator are now saved explicitly in each handler function to ensure immediate Firebase sync
 
   useEffect(() => {
     persistence.saveSelectedAssetId(selectedAssetId);
