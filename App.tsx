@@ -160,45 +160,16 @@ const App: React.FC = () => {
     loadData();
   }, []);
 
-  // Real-time synchronization with Firebase
-  useEffect(() => {
-    let isInitialLoad = true;
-    
-    import('./services/firebaseService').then(({ default: firebaseService }) => {
-      // Subscribe to assets changes
-      const unsubscribeAssets = firebaseService.subscribeToAssets((updatedAssets: Asset[]) => {
-        if (updatedAssets.length > 0) {
-          // Skip initial load to prevent overwriting local state during initialization
-          if (isInitialLoad) {
-            isInitialLoad = false;
-            console.log('Skipping initial Firebase sync to preserve local state');
-            return;
-          }
-          
-          setAssets(updatedAssets);
-          localStorage.setItem('evr_assets_v1', JSON.stringify(updatedAssets));
-          console.log('Assets updated from Firebase (real-time):', updatedAssets.length);
-        }
-      });
-
-      // Subscribe to operator changes
-      const unsubscribeOperator = firebaseService.subscribeToOperator((updatedOperator: Operator | null) => {
-        if (updatedOperator) {
-          setOperator(updatedOperator);
-          localStorage.setItem('evr_operator_v1', JSON.stringify(updatedOperator));
-          console.log('Operator updated from Firebase (real-time)');
-        }
-      });
-
-      // Cleanup subscriptions on unmount
-      return () => {
-        unsubscribeAssets();
-        unsubscribeOperator();
-      };
-    }).catch(error => {
-      console.error('Error loading Firebase service:', error);
-    });
-  }, []);
+  // Real-time synchronization with Firebase - DISABLED
+  // Real-time sync was causing race conditions where local updates were overwritten
+  // before being saved to Firebase. Now we rely on explicit save operations only.
+  // Data is loaded once on mount and saved explicitly after each operation.
+  // This ensures data consistency and prevents unexpected overwrites.
+  
+  // If you need multi-device real-time sync in the future, consider:
+  // 1. Adding a debounce/throttle to the listener
+  // 2. Comparing timestamps to detect which data is newer
+  // 3. Using optimistic updates with conflict resolution
   
   const handleSaveOperator = async (data: Operator) => {
     try {
