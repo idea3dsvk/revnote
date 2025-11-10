@@ -8,7 +8,7 @@ Webová aplikácia na správu a evidenciu elektrických revízií ručného nár
 - ✅ **História revízií** - kompletná história všetkých vykonaných revízií s meracími hodnotami
 - ✅ **Automatický výpočet** - automatické určenie ďalšieho termínu revízie podľa typu a skupiny používania
 - ✅ **PDF správy** - generovanie revíznych správ vo formáte PDF
-- ✅ **Používateľské účty** - 3-úrovňový systém oprávnení (Administrator, Revítor, Používateľ)
+- ✅ **Používateľské účty** - 3-úrovňový systém oprávnení (Administrator, Revízor, Používateľ)
 - ✅ **Cloud synchronizácia** - Firebase Firestore pre zdieľanie dát medzi zariadeniami
 - ✅ **Bezpečnosť** - Firebase App Check s reCAPTCHA v3 ochrana
 - ✅ **Perzistencia dát** - automatické ukladanie dát lokálne aj do cloudu
