@@ -1,0 +1,82 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper funkcie pre kontrolu rolí
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && getUserData().role == 'ADMINISTRATOR';
+    }
+    
+    function isRevisor() {
+      return isAuthenticated() && getUserData().role == 'REVISOR';
+    }
+    
+    function isUser() {
+      return isAuthenticated() && getUserData().role == 'USER';
+    }
+    
+    function isActiveUser() {
+      return isAuthenticated() && getUserData().isActive == true;
+    }
+    
+    // Pravidlá pre používateľov
+    match /users/{userId} {
+      // Čítať môžu len prihlásení a aktívni používatelia
+      allow read: if isAuthenticated() && isActiveUser();
+      
+      // Vytvárať a upravovať môžu len administrátori
+      allow create, update: if isAdmin() && isActiveUser();
+      
+      // Mazať môžu len administrátori
+      allow delete: if isAdmin() && isActiveUser();
+    }
+    
+    // Pravidlá pre zariadenia/aktíva
+    match /assets/{assetId} {
+      // Čítať môžu všetci aktívni používatelia
+      allow read: if isAuthenticated() && isActiveUser();
+      
+      // Vytvárať a upravovať môžu revízori a administrátori
+      allow create, update: if isAuthenticated() && isActiveUser() && 
+                               (isAdmin() || isRevisor());
+      
+      // Mazať môžu len administrátori
+      allow delete: if isAdmin() && isActiveUser();
+    }
+    
+    // Pravidlá pre kontroly/inšpekcie
+    match /inspections/{inspectionId} {
+      // Čítať môžu všetci aktívni používatelia
+      allow read: if isAuthenticated() && isActiveUser();
+      
+      // Vytvárať a upravovať môžu revízori a administrátori
+      allow create, update: if isAuthenticated() && isActiveUser() && 
+                               (isAdmin() || isRevisor());
+      
+      // Mazať môžu len administrátori
+      allow delete: if isAdmin() && isActiveUser();
+    }
+    
+    // Pravidlá pre operátorov
+    match /operators/{operatorId} {
+      // Čítať môžu všetci aktívni používatelia
+      allow read: if isAuthenticated() && isActiveUser();
+      
+      // Vytvárať, upravovať a mazať môžu len administrátori
+      allow create, update, delete: if isAdmin() && isActiveUser();
+    }
+    
+    // Všetko ostatné je zakázané
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
