@@ -34,7 +34,9 @@ if (isFirebaseConfigured) {
     db = getFirestore(app);
     auth = getAuth(app);
     
-    // Initialize App Check s reCAPTCHA v3
+    // Firebase App Check temporarily disabled due to configuration issues
+    // Uncomment below when reCAPTCHA is properly configured
+    /*
     const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
     if (recaptchaSiteKey) {
       initializeAppCheck(app, {
@@ -45,8 +47,9 @@ if (isFirebaseConfigured) {
     } else {
       console.warn('reCAPTCHA Site Key not configured. App Check disabled.');
     }
+    */
     
-    console.log('Firebase initialized successfully');
+    console.log('Firebase initialized successfully (App Check disabled)');
   } catch (error) {
     console.error('Error initializing Firebase:', error);
   }
