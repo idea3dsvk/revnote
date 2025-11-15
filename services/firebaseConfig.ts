@@ -16,6 +16,13 @@ const firebaseConfig = {
 // Kontrola či sú Firebase credentials nastavené
 const isFirebaseConfigured = firebaseConfig.apiKey && firebaseConfig.projectId;
 
+console.log('Firebase Configuration Status:', {
+  isConfigured: isFirebaseConfigured,
+  projectId: firebaseConfig.projectId,
+  authDomain: firebaseConfig.authDomain,
+  hasApiKey: !!firebaseConfig.apiKey
+});
+
 // Inicializácia Firebase
 let app: FirebaseApp | undefined;
 let db: Firestore | undefined;

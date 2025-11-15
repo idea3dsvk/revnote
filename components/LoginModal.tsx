@@ -25,15 +25,19 @@ const LoginModal: React.FC<LoginModalProps> = ({ onLoginSuccess }) => {
     setIsLoading(true);
     
     try {
+      console.log('Attempting login with email:', email);
       const result = await authService.login(email, password);
       
       if (result.success && result.user) {
+        console.log('Login successful:', result.user);
         onLoginSuccess(result.user);
       } else {
+        console.error('Login failed:', result.error);
         setError(result.error || 'Prihlásenie zlyhalo');
       }
     } catch (error) {
-      setError('Neočakávaná chyba pri prihlásení');
+      console.error('Login exception:', error);
+      setError('Neočakávaná chyba pri prihlásení: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setIsLoading(false);
     }
