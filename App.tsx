@@ -466,7 +466,8 @@ const App: React.FC = () => {
           </div>
         )}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-120px)]">
-            <div className="lg:col-span-1 h-full">
+            {/* Asset List - skryté na mobile ak je vybraté zariadenie */}
+            <div className={`lg:col-span-1 h-full ${selectedAssetId ? 'hidden lg:block' : 'block'}`}>
                 <AssetList 
                     assets={assets} 
                     selectedAssetId={selectedAssetId} 
@@ -477,7 +478,22 @@ const App: React.FC = () => {
                     canEditOperator={authService.canEditOperator()}
                 />
             </div>
-            <div className="lg:col-span-2 h-full overflow-y-auto bg-gray-50 rounded-lg">
+            {/* Asset Detail - zobrazené na mobile len ak je vybraté zariadenie */}
+            <div className={`lg:col-span-2 h-full overflow-y-auto bg-gray-50 rounded-lg ${selectedAssetId ? 'block' : 'hidden lg:block'}`}>
+                {/* Tlačidlo Späť pre mobile */}
+                {selectedAssetId && (
+                  <div className="lg:hidden sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3">
+                    <button
+                      onClick={() => setSelectedAssetId(null)}
+                      className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                      Späť na zoznam
+                    </button>
+                  </div>
+                )}
                 <AssetDetail 
                     asset={selectedAsset || null} 
                     onAddInspection={openAddInspectionModal}
