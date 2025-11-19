@@ -20,7 +20,7 @@ const getDb = (): Firestore => db as Firestore;
 // Kolekcie v Firestore
 const COLLECTIONS = {
   ASSETS: 'assets',
-  OPERATOR: 'operator',
+  OPERATOR: 'operators',
   USERS: 'users',
   SETTINGS: 'settings'
 };

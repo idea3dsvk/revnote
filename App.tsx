@@ -163,16 +163,49 @@ const App: React.FC = () => {
     loadData();
   }, []);
 
-  // Real-time synchronization with Firebase - DISABLED
-  // Real-time sync was causing race conditions where local updates were overwritten
-  // before being saved to Firebase. Now we rely on explicit save operations only.
-  // Data is loaded once on mount and saved explicitly after each operation.
-  // This ensures data consistency and prevents unexpected overwrites.
-  
-  // If you need multi-device real-time sync in the future, consider:
-  // 1. Adding a debounce/throttle to the listener
-  // 2. Comparing timestamps to detect which data is newer
-  // 3. Using optimistic updates with conflict resolution
+  // Real-time synchronization with Firebase
+  useEffect(() => {
+    if (!currentUser) return; // Don't sync if not logged in
+
+    const { default: firebaseService } = require('./services/firebaseService');
+    
+    // Subscribe to real-time updates from Firebase
+    const unsubscribeAssets = firebaseService.subscribeToAssets((firebaseAssets: Asset[]) => {
+      console.log('Real-time assets update received:', firebaseAssets.length);
+      
+      // Only update if we have data from Firebase
+      if (firebaseAssets.length > 0) {
+        setAssets(firebaseAssets);
+        
+        // If current selection doesn't exist anymore, reset it
+        setSelectedAssetId(prevId => {
+          if (prevId && !firebaseAssets.find(a => a.id === prevId)) {
+            return firebaseAssets[0]?.id || null;
+          }
+          return prevId;
+        });
+        
+        // Update localStorage cache
+        localStorage.setItem('evr_assets_v1', JSON.stringify(firebaseAssets));
+      }
+    });
+
+    const unsubscribeOperator = firebaseService.subscribeToOperator((firebaseOperator: Operator | null) => {
+      console.log('Real-time operator update received');
+      
+      if (firebaseOperator) {
+        setOperator(firebaseOperator);
+        // Update localStorage cache
+        localStorage.setItem('evr_operator_v1', JSON.stringify(firebaseOperator));
+      }
+    });
+
+    // Cleanup subscriptions on unmount or user change
+    return () => {
+      unsubscribeAssets();
+      unsubscribeOperator();
+    };
+  }, [currentUser]);
   
   const handleSaveOperator = async (data: Operator) => {
     try {

@@ -9,21 +9,28 @@ const SELECTED_ASSET_KEY = 'evr_selected_asset_v1';
 // ============= ASSETS =============
 
 export const loadAssets = async (): Promise<Asset[] | null> => {
-  // Ak je Firebase nakonfigurované, načítaj z Firebase
+  // Ak je Firebase nakonfigurované, načítaj iba z Firebase
   if (isFirebaseConfigured) {
     try {
       const firebaseAssets = await firebaseService.loadAssetsFromFirebase();
-      if (firebaseAssets.length > 0) {
-        // Ulož do localStorage ako cache
-        localStorage.setItem(ASSETS_KEY, JSON.stringify(firebaseAssets));
-        return firebaseAssets;
-      }
+      // Vždy ulož do localStorage ako cache (aj prázdne pole)
+      localStorage.setItem(ASSETS_KEY, JSON.stringify(firebaseAssets));
+      return firebaseAssets;
     } catch (error) {
       console.error('Error loading from Firebase, falling back to localStorage', error);
+      // Len pri chybe použijeme localStorage
+      try {
+        const raw = localStorage.getItem(ASSETS_KEY);
+        if (!raw) return null;
+        return JSON.parse(raw) as Asset[];
+      } catch (e) {
+        console.error('Failed to load assets from localStorage', e);
+        return null;
+      }
     }
   }
 
-  // Fallback na localStorage
+  // Fallback na localStorage ak Firebase nie je nakonfigurované
   try {
     const raw = localStorage.getItem(ASSETS_KEY);
     if (!raw) return null;
@@ -55,21 +62,30 @@ export const saveAssets = async (assets: Asset[]) => {
 // ============= OPERATOR =============
 
 export const loadOperator = async (): Promise<Operator | null> => {
-  // Ak je Firebase nakonfigurované, načítaj z Firebase
+  // Ak je Firebase nakonfigurované, načítaj iba z Firebase
   if (isFirebaseConfigured) {
     try {
       const firebaseOperator = await firebaseService.loadOperatorFromFirebase();
+      // Ulož do localStorage ako cache (aj null)
       if (firebaseOperator) {
-        // Ulož do localStorage ako cache
         localStorage.setItem(OPERATOR_KEY, JSON.stringify(firebaseOperator));
-        return firebaseOperator;
       }
+      return firebaseOperator;
     } catch (error) {
       console.error('Error loading operator from Firebase, falling back to localStorage', error);
+      // Len pri chybe použijeme localStorage
+      try {
+        const raw = localStorage.getItem(OPERATOR_KEY);
+        if (!raw) return null;
+        return JSON.parse(raw) as Operator;
+      } catch (e) {
+        console.error('Failed to load operator from localStorage', e);
+        return null;
+      }
     }
   }
 
-  // Fallback na localStorage
+  // Fallback na localStorage ak Firebase nie je nakonfigurované
   try {
     const raw = localStorage.getItem(OPERATOR_KEY);
     if (!raw) return null;
