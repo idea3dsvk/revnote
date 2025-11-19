@@ -4,6 +4,7 @@ import { Asset, Inspection, InspectionStatus, UsageType, UsageGroup, Operator, U
 import persistence from './services/persistence';
 import authService from './services/authService';
 import toastService from './services/toastService';
+import firebaseService from './services/firebaseService';
 import AssetList from './components/AssetList';
 import AssetDetail from './components/AssetDetail';
 import AddAssetModal from './components/AddAssetModal';
@@ -166,8 +167,6 @@ const App: React.FC = () => {
   // Real-time synchronization with Firebase
   useEffect(() => {
     if (!currentUser) return; // Don't sync if not logged in
-
-    const { default: firebaseService } = require('./services/firebaseService');
     
     // Subscribe to real-time updates from Firebase
     const unsubscribeAssets = firebaseService.subscribeToAssets((firebaseAssets: Asset[]) => {
@@ -343,7 +342,6 @@ const App: React.FC = () => {
       }
       
       // Delete from Firebase explicitly first
-      const { default: firebaseService } = await import('./services/firebaseService');
       await firebaseService.deleteAssetFromFirebase(assetId);
       
       // Then save updated list to localStorage
